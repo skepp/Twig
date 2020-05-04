@@ -12,10 +12,12 @@ namespace Twig\Tests;
  */
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Cache\CacheInterface;
 use Twig\Cache\FilesystemCache;
 use Twig\Environment;
 use Twig\Error\RuntimeError;
+use Twig\Event\PreRenderEvent;
 use Twig\Extension\AbstractExtension;
 use Twig\Extension\ExtensionInterface;
 use Twig\Extension\GlobalsInterface;
@@ -349,6 +351,19 @@ class EnvironmentTest extends TestCase
         $template = 'testFailLoadTemplate.twig';
         $twig = new Environment(new ArrayLoader([$template => false]));
         $twig->loadTemplate($twig->getTemplateClass($template), $template, 112233);
+    }
+
+    public function testGetEventDispatcher()
+    {
+        $loader = new ArrayLoader([
+            'foo' => '{{ foo }}',
+        ]);
+        $options = ['cache' => false, 'debug' => true];
+        $twig = new Environment($loader, $options);
+        $this->assertNull($twig->getEventDispatcher());
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $twig = new Environment($loader, $options, $eventDispatcher);
+        $this->assertInstanceOf(EventDispatcherInterface::class, $twig->getEventDispatcher());
     }
 
     protected function getMockLoader($templateName, $templateContent)
